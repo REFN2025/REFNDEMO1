@@ -1,0 +1,417 @@
+<!DOCTYPE html> 
+<html>
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>REFN Demo</title>
+   <script src="jquery-2.1.0.min.js"></script>
+   <script src="cytoscape-2.1.0.min.js"></script>
+   <link rel="stylesheet" type="text/css" href="demo.css" media="screen" />
+   <script src="vizmap.js"></script>
+   <!-- 注意：移除了 VChart 库的引入 -->
+   <script src="demo.js"></script>
+   <style>
+        /* 全局样式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        /* 步骤容器样式 */
+        .step-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 下拉选择框样式 */
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        /* 网络拓扑图容器样式 */
+        #cy {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #e0e0e0;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        /* 文件上传样式 */
+        input[type="file"] {
+            padding: 8px;
+            border: 1px dashed #ddd;
+            border-radius: 6px;
+            background-color: #fafafa;
+            width: 100%;
+        }
+
+        /* 弹框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 0;
+            width: 350px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            background-color: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            text-align: right;
+            border-top: 1px solid #eee;
+            background-color: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #000;
+            background-color: #f0f0f0;
+            transform: scale(1.1);
+        }
+        
+        .modal-btn {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .modal-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* 柱状图容器样式 */
+        #chartContainer {
+            width: 90%;
+            max-width: 1000px;
+            margin: 20px auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: none;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        #barChartCanvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        /* 步骤标签样式 */
+        .step-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 预格式文本样式 */
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="step-container">
+        <!-- Step 1: 网络拓扑 -->
+        <div class="card">
+            <div class="step-label">Step 1</div>
+            <div class="card-title">Display Network Topology</div>
+            <input type="file" id="filechoice" accept="image/*" />
+            <img id="preview" src="top.png" alt="网络拓扑图" style="display: none;">
+        </div>
+
+        <!-- 网络拓扑图 -->
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <div id="cy"></div>
+        </div>
+
+        <!-- Step 2: 选择漏洞 -->
+        <div class="card">
+            <div class="step-label">Step 2</div>
+            <div class="card-title">Select the 1-day exploit</div>
+            <select id="Select New Exploit" class="form-control">
+                <option value="">-- Select an exploit --</option>
+                <option value="log4j">Log4j (CVE-2017-7494)</option>
+                <option value="spookyssl">SpookySSL (CVE-2022-3602)</option>
+                <option value="modbusfakecmd">Modbus Fake Command (CVE-2017-7494)</option>
+                <option value="huelightblackout">Hue Light Blackout (CVE-2017-14797)</option>
+                <option value="sambacry">SambaCry (CVE-2017-7494)</option>
+                <option value="mirai">Mirai Botnet (CVE-2017-7494)</option>
+                <option value="plexdvr">Plex DVR (CVE-2014-9181)</option>
+                <option value="ciscorouterhttp">Cisco Router HTTP (CVE-2001-0537)</option>
+                <option value="torii">Torii Botnet (CVE-2001-0537)</option>
+                <option value="alexa">Alexa Attack (CVE-2001-0537)</option>
+                <option value="eternalblue">EternalBlue (MS17-010)</option>
+                <option value="cryptowall">CryptoWall Ransomware (CVE-2001-0537)</option>
+                <option value="bladabindi">Bladabindi/NJRat (CVE-2001-0537)</option>
+                <option value="conficker">Conficker Worm (MS08-067)</option>
+                <option value="ciscoroutercmp">Cisco Router CMP (CVE-2001-0537)</option>
+                <option value="gh0strat">Gh0st RAT (CVE-2001-0537)</option>
+                <option value="virut">Virut Botnet (CVE-2001-0537)</option>
+                <option value="trojanvalyria">Trojan:Win32/Valyria (CVE-2001-0537)</option>
+                <option value="pony">Pony Loader (CVE-2001-0537)</option>
+                <option value="yakesmalware">Yakes Malware (CVE-2001-0537)</option>
+                <option value="locky">Locky Ransomware (CVE-2001-0537)</option>
+            </select>
+        </div>
+
+        <!-- Step 3: RL训练 -->
+        <div class="card">
+            <div class="step-label">Step 3</div>
+            <div class="card-title">Start RL training to generate a new REFN model</div>
+            <button type="button" class="btn" id="startrltraining">Start RL Training</button>
+        </div>
+
+        <!-- Step 4: 部署模型 -->
+        <div class="card">
+            <div class="step-label">Step 4</div>
+            <div class="card-title">Deploy the REFN model and generate a new VNF defense against the 1-day exploit</div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn" id="deploymodel">Deploy REFN model</button>
+                <button type="button" class="btn" id="generatevnfdefense">Generate VNF Defense</button>
+            </div>
+        </div>
+
+        <!-- Step 5: 测试漏洞 -->
+        <div class="card">
+            <div class="step-label">Step 5</div>
+            <div class="card-title">Test the new VNF defense against 1-day exploit</div>
+            <button type="button" class="btn" id="testexploit">Test exploit</button>
+        </div>
+
+        <!-- Step 6: 测试良性流量 -->
+        <div class="card">
+            <div class="step-label">Step 6</div>
+            <div class="card-title">Test the new VNF defense against benign traffic</div>
+            <button type="button" class="btn" id="testbenign">Test benign</button>
+        </div>
+
+        <!-- Step 7: 整体评估 -->
+        <div class="card">
+            <div class="step-label">Step 7</div>
+            <div class="card-title">Overall REFN assessment over 22 families of 1-day exploit and 65 types of devices</div>
+            <button type="button" class="btn" id="showalltests">Show All Tests</button>
+        </div>
+    </div>
+
+    <!-- 柱状图容器 -->
+    <div id="chartContainer" style="display: none;">
+        <div class="chart-title">REFN Performance Assessment</div>
+        <p style="text-align: center; margin: 10px 0; color: #666; font-size: 14px;">
+            Overall REFN assessment over 22 families of 1-day exploit and 65 types of devices
+        </p>
+        <canvas id="barChartCanvas"></canvas>
+    </div>
+
+    <!-- 输出区域 -->
+    <div class="card">
+        <div class="card-title">Output</div>
+        <pre id="contents"></pre>
+        <pre id="contentpolicy"></pre>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-header">
+                <h2>Success!</h2>
+            </div>
+            <div class="modal-body">
+                <p>RL training started successfully!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn">OK</button> 
+            </div>
+        </div>
+    </div>
+
+    <div id="deployREFNmodal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-header">
+                <h2>Deployment Success!</h2>
+            </div>
+            <div class="modal-body">
+                <p>REFN deployed successfully!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn">OK</button> 
+            </div>
+        </div>
+    </div>
+
+    <div id="generateVNFDefense" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-header">
+                <h2>Generate VNF Success!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Generate VNF defense successfully!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn">OK</button> 
+            </div>
+        </div>
+    </div>
+
+    <div id="TestExploit" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-header">
+                <h2>Test Exploit Success!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Test exploit successfully!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn">OK</button> 
+            </div>
+        </div>
+    </div>
+
+    <div id="TestBenign" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-header">
+                <h2>Benign Test!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Benign Test successfully!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn">OK</button> 
+            </div>
+        </div>
+    </div>
+</body>
+</html>
